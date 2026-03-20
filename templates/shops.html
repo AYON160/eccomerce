@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Shops - Ecommerce{% endblock %}
+{% block content %}
+<div class="shops-page">
+    <div class="container">
+        <div class="shops-layout">
+            <aside class="shops-sidebar">
+                <h3>Filters</h3>
+                <p class="helper-text">Search and filter shops.</p>
+            </aside>
+            <main class="shops-main">
+                <form class="shops-search" action="/shops" method="get">
+                    <input type="text" name="q" placeholder="Search shop by name" value="{{ query or '' }}">
+                    <select name="category">
+                        <option value="">Category</option>
+                        {% for key, value in categories.items() %}
+                        <option value="{{ key }}" {% if selected_category == key %}selected{% endif %}>{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="district" placeholder="District" value="{{ district or '' }}">
+                    <button type="submit" class="btn btn-secondary">Search</button>
+                </form>
+
+                <div class="shops-list">
+                    {% if shops %}
+                        {% for shop in shops %}
+                        <div class="shop-card">
+                            <div class="shop-image">
+                                {% if shop.image %}
+                                    <img src="/uploads/{{ shop.image }}" alt="{{ shop.name }}" onerror="this.src='/assets/drone.png'">
+                                {% else %}
+                                    <img src="/assets/drone.png" alt="{{ shop.name }}">
+                                {% endif %}
+                            </div>
+                            <div class="shop-info">
+                                <h3>{{ shop.name }}</h3>
+                                <p class="shop-owner">{{ shop.owner_email }}{% if shop.owner_name %} / {{ shop.owner_name }}{% endif %}</p>
+                                <p class="shop-meta">
+                                    {% if shop.seller_category %}
+                                        {{ categories.get(shop.seller_category, shop.seller_category) }}
+                                    {% else %}
+                                        Uncategorized
+                                    {% endif %}
+                                    / {{ shop.shop_count }} shops
+                                </p>
+                                {% if shop.district %}
+                                    <p class="shop-location">{{ shop.district }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No shops found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}

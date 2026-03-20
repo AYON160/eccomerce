@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Products - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="products-page">
+    <div class="container">
+        <div class="products-header">
+            <h1>Our Products</h1>
+            {% if selected_category %}
+            <p>Showing {{ categories.get(selected_category, selected_category) }} products</p>
+            {% endif %}
+        </div>
+
+        <div class="products-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Categories</h3>
+                    <ul class="category-list">
+                        <li><a href="/products" class="{% if not selected_category %}active{% endif %}">All Products</a></li>
+                        {% for key, name in categories.items() %}
+                        <li><a href="/products?category={{ key }}" class="{% if selected_category == key %}active{% endif %}">{{ name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Price Range</h3>
+                    <div class="price-filter">
+                        <label><input type="checkbox"> Under $50</label>
+                        <label><input type="checkbox"> $50 - $100</label>
+                        <label><input type="checkbox"> $100 - $200</label>
+                        <label><input type="checkbox"> Over $200</label>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Rating</h3>
+                    <div class="rating-filter">
+                        <label><input type="checkbox"> ★★★★★ (5 stars)</label>
+                        <label><input type="checkbox"> ★★★★☆ (4+ stars)</label>
+                        <label><input type="checkbox"> ★★★☆☆ (3+ stars)</label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Products Grid -->
+            <main class="products-main">
+                <div class="products-grid">
+                    {% if products %}
+                        {% for product in products %}
+                        <div class="product-card product-link">
+                            <div class="product-image">
+                                {% if product.get('seller_product') %}
+                                    <img src="/uploads/{{ product.image }}" alt="{{ product.name }}" onerror="this.src='{{ url_for('serve_asset', path='drone.png') }}'">
+                                {% else %}
+                                    <img src="{{ url_for('serve_asset', path=product.image) }}" alt="{{ product.name }}">
+                                {% endif %}
+                            </div>
+                            <div class="product-info">
+                                <h3>{{ product.name }}</h3>
+                                <p class="description">{{ product.description }}</p>
+                                <div class="product-footer">
+                                    {% if product.get('discount', 0) > 0 %}
+                                        <span class="original-price">${{ "%.2f"|format(product.price) }}</span>
+                                        <span class="price">${{ "%.2f"|format(product.price * (1 - product.discount/100)) }}</span>
+                                        <span class="discount-tag">-{{ product.discount }}%</span>
+                                    {% else %}
+                                        <span class="price">${{ "%.2f"|format(product.price) }}</span>
+                                    {% endif %}
+                                    {% if not product.get('in_stock', True) %}
+                                        <span class="stock-tag out-stock">Out of Stock</span>
+                                    {% endif %}
+                                </div>
+                                <a href="/product/{{ product.id }}" class="btn btn-secondary">Details</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="no-products">
+                        <p>No products found in this category.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- Pagination at bottom -->
+                <div class="pagination">
+                    {% if total_pages and total_pages > 1 %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination-list">
+                                {% for p in range(1, total_pages + 1) %}
+                                    <li class="page-item {% if p == page %}active{% endif %}">
+                                        <a href="?page={{ p }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ p }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}

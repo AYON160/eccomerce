@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Dashboard - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="seller-dashboard-page">
+    <div class="container">
+        <div class="seller-header">
+            <h1>Seller Dashboard</h1>
+            <p>Welcome, {{ user_name }}!</p>
+        </div>
+
+        {% if message %}
+        <div class="success-message">{{ message }}</div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+
+        <div class="seller-content">
+            <!-- Add Product Form -->
+            <div class="add-product-section">
+                <h2>Add New Product</h2>
+                <form action="/user/seller" method="post" class="seller-form" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Product Name *</label>
+                            <input type="text" id="name" name="name" required placeholder="Enter product name">
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category *</label>
+                            <select id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                {% for key, value in categories.items() %}
+                                <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="price">Price ($) *</label>
+                            <input type="number" id="price" name="price" required placeholder="0.00" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="discount">Discount (%) </label>
+                            <input type="number" id="discount" name="discount" placeholder="0" step="0.01" min="0" max="100">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="4" placeholder="Enter product description..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shop_id">Sell From Shop</label>
+                        {% if seller_shops %}
+                            <select id="shop_id" name="shop_id" required>
+                                <option value="">Select a shop</option>
+                                {% for shop in seller_shops %}
+                                <option value="{{ shop.id }}">{{ shop.name }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input type="hidden" id="shop_id" name="shop_id" value="">
+                            <small>No shops found. Add a shop during signup or contact admin.</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="main_image">Main Product Image</label>
+                        <input type="file" id="main_image" name="main_image" accept="image/*">
+                        <small>Accepted formats: PNG, JPG, JPEG, GIF (Max 16MB)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock_quantity">Stock Quantity</label>
+                        <input type="number" id="stock_quantity" name="stock_quantity" value="10" min="1" placeholder="Enter stock quantity...">
+                    </div>
+
+                    <div class="form-group checkbox">
+                        <input type="checkbox" id="in_stock" name="in_stock" checked>
+                        <label for="in_stock">In Stock</label>
+                    </div>
+
+
+                    <div class="specifications-section">
+                        <h3>Specifications (Up to 20)</h3>
+                        <div id="specs-container">
+                            <!-- Dynamically added specification fields -->
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="addSpecification()">+ Add Specification</button>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large">Add Product</button>
+                </form>
+            </div>
+
+            <!-- Seller's Products -->
+            <div class="products-section">
+                <h2>Your Products ({{ seller_products|length }})</h2>
+                {% if seller_products %}
+                    <div class="seller-products-grid">
+                        {% for product in seller_products %}
+                        <div class="seller-product-card">
+                            <div class="product-image">
+                                {% if product.image %}
+                                    <img src="/uploads/{{ product.image }}" alt="{{ product.name }}" onerror="this.src='/assets/drone.png'">
+                                {% else %}
+                                    <img src="/assets/drone.png" alt="{{ product.name }}">
+                                {% endif %}
+                            </div>
+                            <div class="product-header">
+                                <h3>{{ product.name }}</h3>
+                                <button class="btn-delete" onclick="deleteProduct('{{ product.id }}')">✕</button>
+                            </div>
+                            <div class="product-details">
+                                <p><strong>Category:</strong> {{ categories.get(product.category, product.category) }}</p>
+                                <p><strong>Price:</strong> ${{ "%.2f"|format(product.price) }}</p>
+                                {% if product.discount > 0 %}
+                                    <p><strong>Discount:</strong> {{ product.discount }}%</p>
+                                    <p><strong>Sale Price:</strong> ${{ "%.2f"|format(product.price * (1 - product.discount/100)) }}</p>
+                                {% endif %}
+                                <p><strong>Status:</strong> <span class="status-badge {% if product.in_stock %}in-stock{% else %}out-stock{% endif %}">
+                                    {{ 'In Stock' if product.in_stock else 'Out of Stock' }}
+                                </span></p>
+                                <p><strong>Description:</strong> {{ product.description }}</p>
+                                {% if product.specifications %}
+                                    <div class="specifications">
+                                        <strong>Specifications:</strong>
+                                        <ul>
+                                            {% for spec in product.specifications %}
+                                            <li><strong>{{ spec.name }}:</strong> {{ spec.value }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                                {% if product.location %}
+                                    <div class="location-info" style="margin-top:10px; padding:10px; background:#f0f7ff; border-radius:3px;">
+                                        <strong>📍 Delivery Location:</strong>
+                                        <ul style="margin:5px 0; padding-left:20px; font-size:0.9em;">
+                                            {% if product.location.house_no %}<li>House: {{ product.location.house_no }}</li>{% endif %}
+                                            {% if product.location.road_no %}<li>Road: {{ product.location.road_no }}</li>{% endif %}
+                                            {% if product.location.area %}<li>Area: {{ product.location.area }}</li>{% endif %}
+                                            {% if product.location.ward_no %}<li>Ward: {{ product.location.ward_no }}</li>{% endif %}
+                                            {% if product.location.thana %}<li>Thana: {{ product.location.thana }}</li>{% endif %}
+                                            {% if product.location.district %}<li>District: {{ product.location.district }}</li>{% endif %}
+                                            {% if product.location.landmark %}<li>Landmark: {{ product.location.landmark }}</li>{% endif %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No products added yet. Use the form above to add your first product!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let specCount = 0;
+
+function addSpecification() {
+    if (specCount >= 20) {
+        alert('Maximum 20 specifications allowed');
+        return;
+    }
+    specCount++;
+    
+    const container = document.getElementById('specs-container');
+    const specDiv = document.createElement('div');
+    specDiv.className = 'form-group spec-field';
+    specDiv.innerHTML = `
+        <div class="spec-input-wrapper">
+            <input type="text" name="spec_name_${specCount}" placeholder="Specification name" style="flex: 1;">
+            <input type="text" name="spec_value_${specCount}" placeholder="Specification value" style="flex: 1;">
+            <button type="button" class="btn-remove-spec" onclick="this.parentElement.parentElement.remove(); specCount--;"><span>−</span></button>
+        </div>
+    `;
+    container.appendChild(specDiv);
+}
+
+function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    fetch(`/user/seller/delete/${productId}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('Product deleted successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+</script>
+{% endblock %}

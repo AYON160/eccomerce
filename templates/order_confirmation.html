@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmation - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="confirmation-page">
+    <div class="container">
+        <div class="confirmation-content">
+            <div class="confirmation-icon">✓</div>
+            <h1>Order Confirmed!</h1>
+            <p>Thank you for your purchase!</p>
+
+            <div class="order-details">
+                <div class="detail-row">
+                    <span>Order ID:</span>
+                    <span class="order-id">{{ order_id }}</span>
+                </div>
+                <div class="detail-row">
+                    <span>Status:</span>
+                    <span class="status">Processing</span>
+                </div>
+                <div class="detail-row">
+                    <span>Expected Delivery:</span>
+                    <span>3-5 business days</span>
+                </div>
+            </div>
+
+            <p class="confirmation-message">
+                A confirmation email has been sent to your email address. 
+                You can track your order using the order ID above.
+            </p>
+
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary">Back to Home</a>
+                <a href="/products" class="btn btn-secondary">Continue Shopping</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

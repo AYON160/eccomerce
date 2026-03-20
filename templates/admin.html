@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="admin-panel">
+    <div class="container">
+        <div class="admin-header">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, {{ user_name }}!</p>
+        </div>
+
+        <div class="admin-tabs">
+            <a href="/admin?action=dashboard" class="tab-btn {% if active_tab == 'dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/admin?action=users" class="tab-btn {% if active_tab == 'users' %}active{% endif %}">Users</a>
+            <a href="/admin?action=products" class="tab-btn {% if active_tab == 'products' %}active{% endif %}">Products</a>
+            <a href="/admin?action=orders" class="tab-btn {% if active_tab == 'orders' %}active{% endif %}">Orders</a>
+        </div>
+
+        <div class="admin-content">
+            {% if active_tab == 'dashboard' %}
+            <div class="dashboard-section">
+                <h2>Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <p class="stat-value">{{ stats.total_users }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Sellers</h3>
+                        <p class="stat-value">{{ stats.sellers }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Buyers</h3>
+                        <p class="stat-value">{{ stats.buyers }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Blocked Accounts</h3>
+                        <p class="stat-value">{{ stats.blocked }}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Products</h3>
+                        <p class="stat-value">{{ stats.total_products }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% elif active_tab == 'users' %}
+            <div class="users-section">
+                <h2>User Management</h2>
+                <form class="admin-search" action="/admin" method="get" style="margin: 10px 0 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="hidden" name="action" value="users">
+                    <input type="text" name="q" placeholder="Search by email or name" value="{{ query or '' }}" style="flex: 1; min-width: 220px; padding: 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--secondary-dark); color: var(--text-primary);">
+                    <button type="submit" class="btn btn-secondary">Search</button>
+                </form>
+                {% if users %}
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr class="{% if user.blocked %}blocked-row{% endif %}">
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.name }}</td>
+                                <td><span class="role-badge role-{{ user.role }}">{{ user.role|capitalize }}</span></td>
+                                <td>
+                                    {% if user.blocked %}
+                                        <span class="status-badge blocked">Blocked</span>
+                                    {% else %}
+                                        <span class="status-badge active">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td class="action-buttons">
+                                    {% if user.blocked %}
+                                        <button class="btn-action btn-unblock" onclick="unblockUser('{{ user.email }}')">Unblock</button>
+                                    {% else %}
+                                        <button class="btn-action btn-block" onclick="blockUser('{{ user.email }}')">Block</button>
+                                    {% endif %}
+                                    <button class="btn-action btn-delete-user" onclick="deleteUser('{{ user.email }}')">Delete</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No users found</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% elif active_tab == 'products' %}
+            <div class="products-section">
+                <h2>Seller Products Management</h2>
+                {% if products %}
+                <div class="admin-products-grid">
+                    {% for product in products %}
+                    <div class="admin-product-card">
+                        <div class="product-image">
+                            {% if product.image %}
+                                <img src="/uploads/{{ product.image }}" alt="{{ product.name }}" onerror="this.src='/assets/drone.png'">
+                            {% else %}
+                                <img src="/assets/drone.png" alt="{{ product.name }}">
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <h3>{{ product.name }}</h3>
+                            <p><strong>Seller:</strong> {{ product.seller_email }}</p>
+                            <p><strong>Category:</strong> {{ categories.get(product.category, product.category) }}</p>
+                            <p><strong>Price:</strong> ${{ "%.2f"|format(product.price) }}</p>
+                            {% if product.discount > 0 %}
+                                <p><strong>Discount:</strong> {{ product.discount }}%</p>
+                            {% endif %}
+                            <p><strong>Status:</strong> <span class="status-badge {% if product.in_stock %}in-stock{% else %}out-stock{% endif %}">
+                                {{ 'In Stock' if product.in_stock else 'Out of Stock' }}
+                            </span></p>
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn-delete" onclick="deleteProduct('{{ product.id }}')">Delete Product</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No seller products found</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% elif active_tab == 'orders' %}
+            <div class="orders-section">
+                <h2>Order Management</h2>
+                <div class="empty-state">
+                    <p>Order tracking coming soon...</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-panel {
+    padding: 2rem 0;
+    min-height: 80vh;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 1rem;
+}
+
+.admin-header h1 {
+    color: var(--accent-blue);
+    margin-bottom: 0.5rem;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--dark-bg, #1a1a1a);
+    border: 2px solid var(--accent-blue);
+    color: var(--accent-blue);
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    background: var(--accent-blue);
+    color: var(--dark-bg, #1a1a1a);
+}
+
+.tab-btn.active {
+    background: var(--accent-blue);
+    color: var(--dark-bg, #1a1a1a);
+}
+
+.admin-content {
+    background: var(--dark-bg, #2a2a2a);
+    border: 1px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--accent-blue), var(--dark-bg, #1a1a1a));
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent-blue);
+    text-align: center;
+}
+
+.stat-card h3 {
+    color: var(--text-light, #e0e0e0);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    color: var(--accent-blue);
+    font-weight: 700;
+    margin: 0;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.admin-table thead {
+    background: var(--accent-blue);
+    color: var(--dark-bg, #1a1a1a);
+}
+
+.admin-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.admin-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--dark-text, #444);
+}
+
+.admin-table tbody tr:hover {
+    background: var(--dark-text, #333);
+}
+
+.admin-table tbody tr.blocked-row {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.role-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.role-admin {
+    background: var(--accent-blue);
+    color: var(--dark-bg, #1a1a1a);
+}
+
+.role-seller {
+    background: rgba(255, 165, 0, 0.3);
+    color: #ffa500;
+}
+
+.role-buyer {
+    background: rgba(100, 200, 100, 0.3);
+    color: #64c864;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: rgba(100, 200, 100, 0.3);
+    color: #64c864;
+}
+
+.status-badge.blocked {
+    background: rgba(255, 0, 0, 0.3);
+    color: #ff4444;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-block {
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+}
+
+.btn-block:hover {
+    background: rgba(255, 0, 0, 1);
+}
+
+.btn-unblock {
+    background: rgba(100, 200, 100, 0.8);
+    color: white;
+}
+
+.btn-unblock:hover {
+    background: rgba(100, 200, 100, 1);
+}
+
+.btn-delete-user {
+    background: rgba(255, 71, 87, 0.85);
+    color: white;
+}
+
+.btn-delete-user:hover {
+    background: rgba(255, 71, 87, 1);
+}
+
+.admin-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.admin-product-card {
+    background: var(--dark-text, #333);
+    border: 1px solid var(--accent-blue);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.admin-product-card:hover {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 15px rgba(0, 150, 255, 0.3);
+}
+
+.admin-product-card .product-image {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+    background: var(--dark-bg, #1a1a1a);
+}
+
+.admin-product-card .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-product-card .product-info {
+    padding: 1rem;
+}
+
+.admin-product-card h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--accent-blue);
+    font-size: 1rem;
+}
+
+.admin-product-card p {
+    margin: 0.25rem 0;
+    font-size: 0.85rem;
+}
+
+.admin-product-card .product-actions {
+    padding: 1rem;
+    border-top: 1px solid var(--dark-text, #444);
+}
+
+.btn-delete {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: rgba(255, 0, 0, 1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-light, #aaa);
+}
+
+@media (max-width: 768px) {
+    .admin-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .admin-table {
+        font-size: 0.85rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-action {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+function blockUser(email) {
+    if (!confirm(`Are you sure you want to block ${email}?`)) return;
+    
+    fetch(`/admin/block/${email}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('User blocked successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+function unblockUser(email) {
+    if (!confirm(`Are you sure you want to unblock ${email}?`)) return;
+    
+    fetch(`/admin/unblock/${email}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('User unblocked successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+function deleteProduct(productId) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    fetch(`/admin/delete-product/${productId}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('Product deleted successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+function deleteUser(email) {
+    if (!confirm(`Delete ${email} permanently? This cannot be undone.`)) return;
+    
+    fetch(`/admin/delete-user/${email}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('User deleted successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="product-detail-page">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Home</a> / <a href="/products">Products</a> / <span>{{ product.name }}</span>
+        </div>
+
+        <div class="product-detail">
+            <div class="product-image-section">
+                <div class="main-image">
+                    {% if product.get('seller_product') %}
+                        <img src="/uploads/{{ product.image }}" alt="{{ product.name }}" onerror="this.src='{{ url_for('serve_asset', path='drone.png') }}'">
+                    {% else %}
+                        <img src="{{ url_for('serve_asset', path=product.image) }}" alt="{{ product.name }}">
+                    {% endif %}
+                </div>
+                <div class="thumbnail-images">
+                    {% if product.get('seller_product') %}
+                        <img src="/uploads/{{ product.image }}" alt="Thumbnail 1" onerror="this.src='{{ url_for('serve_asset', path='drone.png') }}'">
+                        <img src="/uploads/{{ product.image }}" alt="Thumbnail 2" onerror="this.src='{{ url_for('serve_asset', path='drone.png') }}'">
+                        <img src="/uploads/{{ product.image }}" alt="Thumbnail 3" onerror="this.src='{{ url_for('serve_asset', path='drone.png') }}'">
+                    {% else %}
+                        <img src="{{ url_for('serve_asset', path=product.image) }}" alt="Thumbnail 1">
+                        <img src="{{ url_for('serve_asset', path=product.image) }}" alt="Thumbnail 2">
+                        <img src="{{ url_for('serve_asset', path=product.image) }}" alt="Thumbnail 3">
+                    {% endif %}
+                </div>
+                {% if product.get('seller_product') and shop %}
+                    <div class="seller-shop" style="margin-top:10px; padding:10px; background:#f9f9f9; border-radius:4px; border-left:3px solid #2e8eff;">
+                        <p style="margin:0; color:#333;"><strong>Shop:</strong> {{ shop.name }}</p>
+                        {% if shop.description %}
+                            <p style="margin:4px 0 0; color:#666; font-size:0.9em;">{{ shop.description }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="product-details-section">
+                <h1>{{ product.name }}</h1>
+                
+                {% if product.get('seller_product') %}
+                    <div class="seller-info">
+                        <p><strong>Seller:</strong> {{ product.seller_email }}</p>
+                        {% if product.get('location') %}
+                            <div class="seller-address" style="margin-top:10px; padding:10px; background:#f9f9f9; border-radius:4px; border-left:3px solid #3498db;">
+                                <p><strong>📍 Delivery Location:</strong></p>
+                                <ul style="margin:5px 0; padding-left:20px; font-size:0.95em; color:#555;">
+                                    {% if product.location.house_no %}<li><strong>House/Holding No:</strong> {{ product.location.house_no }}</li>{% endif %}
+                                    {% if product.location.road_no %}<li><strong>Road No:</strong> {{ product.location.road_no }}</li>{% endif %}
+                                    {% if product.location.area %}<li><strong>Area:</strong> {{ product.location.area }}</li>{% endif %}
+                                    {% if product.location.ward_no %}<li><strong>Ward No:</strong> {{ product.location.ward_no }}</li>{% endif %}
+                                    {% if product.location.thana %}<li><strong>Thana/Upazila:</strong> {{ product.location.thana }}</li>{% endif %}
+                                    {% if product.location.district %}<li><strong>District:</strong> {{ product.location.district }}</li>{% endif %}
+                                    {% if product.location.landmark %}<li><strong>Nearby Landmark:</strong> {{ product.location.landmark }}</li>{% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <div class="rating">
+                    <span class="stars">★★★★★</span>
+                    <span class="reviews">(128 reviews)</span>
+                </div>
+
+                <div class="price-section">
+                    {% if product.get('discount', 0) > 0 %}
+                        <span class="original-price">${{ "%.2f"|format(product.price) }}</span>
+                        <span class="price">${{ "%.2f"|format(product.price * (1 - product.discount/100)) }}</span>
+                        <span class="discount-badge">-{{ product.discount }}%</span>
+                    {% else %}
+                        <span class="price">${{ "%.2f"|format(product.price) }}</span>
+                    {% endif %}
+                    <span class="stock {% if product.get('in_stock', True) %}in-stock{% else %}out-stock{% endif %}">
+                        {{ 'In Stock' if product.get('in_stock', True) else 'Out of Stock' }}
+                    </span>
+                </div>
+
+                <p class="description">{{ product.description }}</p>
+
+                <div class="product-specs">
+                    <h3>Specifications</h3>
+                    <ul>
+                        <li><strong>Category:</strong> {{ categories.get(product.category, product.category) }}</li>
+                        {% if product.get('seller_product') %}
+                            {% for spec in product.get('specifications', []) %}
+                                <li><strong>{{ spec.name }}:</strong> {{ spec.value }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li><strong>Availability:</strong> In Stock</li>
+                            <li><strong>Warranty:</strong> 1 Year</li>
+                            <li><strong>Free Shipping:</strong> Yes</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="purchase-section">
+                    <form action="/add-to-cart/{{ product.id }}" method="post" style="display:flex; gap:10px; align-items:flex-end;">
+                        <div class="quantity-selector">
+                            <label for="quantity">Quantity:</label>
+                            <input type="number" id="quantity" name="quantity" min="1" value="1" max="{{ product.stock_quantity or 999 }}">
+                        </div>
+                        <button class="btn btn-primary btn-full" type="submit" style="flex:1;">Add to Cart</button>
+                    </form>
+                    <div class="stock-warning" id="stock-warning" style="display:none; color:#e74c3c; margin-top:10px; padding:10px; background:#ffe6e6; border-radius:4px; border-left:4px solid #e74c3c;">
+                        ⚠️ Only <span id="stock-count">{{ product.stock_quantity or 999 }}</span> stock left!
+                    </div>
+                    <div class="purchase-buttons" style="margin-top:10px;">
+                        <button class="btn btn-wishlist" id="wishlist-btn" onclick="toggleWishlist({{ product.id }})">
+                            <span id="wishlist-icon">♡</span> Wishlist
+                        </button>
+                        <button class="btn btn-favorite" id="favorite-btn" onclick="toggleFavorite({{ product.id }})">
+                            <span id="favorite-icon">♡</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="additional-info">
+                    <div class="info-box">
+                        <span class="icon">🚚</span>
+                        <div>
+                            <h4>Free Shipping</h4>
+                            <p>On orders over $50</p>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <span class="icon">↩️</span>
+                        <div>
+                            <h4>Easy Returns</h4>
+                            <p>30-day return policy</p>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <span class="icon">🔒</span>
+                        <div>
+                            <h4>Secure Payment</h4>
+                            <p>100% secure transactions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="related-products">
+            <h2>Related Products</h2>
+            <div class="products-grid">
+                        <div class="product-card">
+                    <div class="product-image">
+                        <img src="{{ url_for('serve_asset', path='drone.png') }}" alt="Related Product 1">
+                    </div>
+                    <div class="product-info">
+                        <h3>Related Product 1</h3>
+                        <span class="price">$49.99</span>
+                        <button class="btn btn-secondary">Add to Cart</button>
+                    </div>
+                </div>
+                        <div class="product-card">
+                    <div class="product-image">
+                        <img src="{{ url_for('serve_asset', path='drone.png') }}" alt="Related Product 2">
+                    </div>
+                    <div class="product-info">
+                        <h3>Related Product 2</h3>
+                        <span class="price">$59.99</span>
+                        <button class="btn btn-secondary">Add to Cart</button>
+                    </div>
+                </div>
+                        <div class="product-card">
+                    <div class="product-image">
+                        <img src="{{ url_for('serve_asset', path='drone.png') }}" alt="Related Product 3">
+                    </div>
+                    <div class="product-info">
+                        <h3>Related Product 3</h3>
+                        <span class="price">$69.99</span>
+                        <button class="btn btn-secondary">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFavorite(productId) {
+    const btn = document.getElementById('favorite-btn');
+    const icon = document.getElementById('favorite-icon');
+    const isFav = icon.textContent === '♥';
+    
+    const endpoint = isFav ? `/remove-from-favorites/${productId}` : `/add-to-favorites/${productId}`;
+    
+    fetch(endpoint, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.login_required) {
+                alert('Please login to add to favorites');
+                window.location.href = '/login';
+            } else if (data.success) {
+                icon.textContent = data.is_favorite ? '♥' : '♡';
+                btn.classList.toggle('active', data.is_favorite);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+function toggleWishlist(productId) {
+    const btn = document.getElementById('wishlist-btn');
+    const icon = document.getElementById('wishlist-icon');
+    const inWishlist = icon.textContent === '♥';
+    
+    const endpoint = inWishlist ? `/remove-from-wishlist/${productId}` : `/add-to-wishlist/${productId}`;
+    
+    fetch(endpoint, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.login_required) {
+                alert('Please login to add to wishlist');
+                window.location.href = '/login';
+            } else if (data.success) {
+                icon.textContent = data.in_wishlist ? '♥' : '♡';
+                btn.classList.toggle('active', data.in_wishlist);
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+// Initialize favorite and wishlist button states on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const favIcon = document.getElementById('favorite-icon');
+    const wishIcon = document.getElementById('wishlist-icon');
+    const favBtn = document.getElementById('favorite-btn');
+    const wishBtn = document.getElementById('wishlist-btn');
+    
+    // Stock warning logic
+    const quantityInput = document.getElementById('quantity');
+    const stockWarning = document.getElementById('stock-warning');
+    const stockQuantity = {{ product.stock_quantity or 999 }};
+    
+    function checkStockWarning() {
+        const quantity = parseInt(quantityInput.value) || 1;
+        if (quantity < 5 && quantity <= stockQuantity) {
+            stockWarning.style.display = 'block';
+        } else {
+            stockWarning.style.display = 'none';
+        }
+    }
+    
+    quantityInput.addEventListener('change', checkStockWarning);
+    quantityInput.addEventListener('input', checkStockWarning);
+    
+    // You can add logic here to check if product is already favorited/wishlisted
+    // For now, they start as empty hearts
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Login / Sign Up - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <div class="container">
+        <div class="login-container">
+            <div class="login-box">
+                {% if mode == 'signup' %}
+                    <h1>Create Account</h1>
+                    <form action="/login" method="post" class="login-form">
+                        <input type="hidden" name="action" value="signup">
+                        {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endif %}
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required placeholder="Enter your password">
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Join as</label>
+                            <select id="role" name="role" required>
+                                <option value="buyer">Buyer</option>
+                                <option value="seller">Seller</option>
+                            </select>
+                        </div>
+                        <div id="seller-extra" style="display: none;">
+                            <div class="form-group">
+                                <label for="seller_category">What do you sell?</label>
+                                <select id="seller_category" name="seller_category">
+                                    <option value="">Select a type</option>
+                                    {% for key, value in categories.items() %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="has_shops">Do you have any shops?</label>
+                                <select id="has_shops" name="has_shops">
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                            <div id="shops-section" style="display: none;">
+                                <input type="hidden" id="shop_count" name="shop_count" value="1">
+                                <div id="shops-container">
+                                    <div class="shop-fields" data-index="1">
+                                        <div class="form-group">
+                                            <label for="shop_name_1">Shop Name</label>
+                                            <input type="text" id="shop_name_1" name="shop_name_1" placeholder="My Store">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_description_1">Shop Description (optional)</label>
+                                            <input type="text" id="shop_description_1" name="shop_description_1" placeholder="What do you sell?">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_country_1">Country</label>
+                                            <input type="text" id="shop_country_1" name="shop_country_1" placeholder="Country">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_division_1">Division/State</label>
+                                            <input type="text" id="shop_division_1" name="shop_division_1" placeholder="Division or State">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_district_1">District/City</label>
+                                            <input type="text" id="shop_district_1" name="shop_district_1" placeholder="District or City">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_thana_N">Thana/Upazila</label>
+                                            <input type="text" id="shop_thana_N" name="shop_thana_N" placeholder="Thana or Upazila">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_area_N">Area</label>
+                                            <input type="text" id="shop_area_N" name="shop_area_N" placeholder="Area Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shop_address_N">Specific Address</label>
+                                            <input type="text" id="shop_address_N" name="shop_address_N" placeholder="Street or Building">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary" id="add-shop">Add Another Shop</button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">Sign Up</button>
+                    </form>
+                    <p class="toggle-form">Already have an account? <a href="/login">Log In</a></p>
+                {% else %}
+                    <h1>Log In</h1>
+                    <form action="/login" method="post" class="login-form">
+                        <input type="hidden" name="action" value="login">
+                        {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endif %}
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required placeholder="your@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required placeholder="Enter your password">
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="remember" name="remember" value="on">
+                            <label for="remember">Remember me</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">Log In</button>
+                    </form>
+                    <p class="toggle-form">Don't have an account? <a href="/login?mode=signup">Sign Up</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const roleSelect = document.getElementById('role');
+        const sellerExtra = document.getElementById('seller-extra');
+        const hasShopsSelect = document.getElementById('has_shops');
+        const shopsSection = document.getElementById('shops-section');
+        const shopsContainer = document.getElementById('shops-container');
+        const addShopButton = document.getElementById('add-shop');
+        const shopCountInput = document.getElementById('shop_count');
+
+        function setShopFieldsRequired(enabled) {
+            const fields = shopsContainer.querySelectorAll('input[type="text"]');
+            fields.forEach((field) => {
+                if (field.id.startsWith('shop_description_')) {
+                    field.required = false;
+                } else {
+                    field.required = enabled;
+                }
+            });
+        }
+
+        const sellerCategory = document.getElementById('seller_category');
+
+        function toggleSellerFields() {
+            if (roleSelect.value === 'seller') {
+                sellerExtra.style.display = 'block';
+                if (sellerCategory) {
+                    sellerCategory.required = true;
+                }
+                toggleShopFields();
+            } else {
+                sellerExtra.style.display = 'none';
+                shopsSection.style.display = 'none';
+                hasShopsSelect.value = 'no';
+                setShopFieldsRequired(false);
+                if (sellerCategory) {
+                    sellerCategory.required = false;
+                    sellerCategory.value = '';
+                }
+            }
+        }
+
+        function toggleShopFields() {
+            if (hasShopsSelect.value === 'yes') {
+                shopsSection.style.display = 'block';
+                setShopFieldsRequired(true);
+            } else {
+                shopsSection.style.display = 'none';
+                setShopFieldsRequired(false);
+            }
+        }
+
+        function addShopFields() {
+            const currentCount = parseInt(shopCountInput.value, 10) || 1;
+            const nextIndex = currentCount + 1;
+            shopCountInput.value = String(nextIndex);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'shop-fields';
+            wrapper.dataset.index = String(nextIndex);
+            wrapper.innerHTML = `
+                <div class="form-group">
+                    <label for="shop_name_${nextIndex}">Shop Name</label>
+                    <input type="text" id="shop_name_${nextIndex}" name="shop_name_${nextIndex}" placeholder="My Store">
+                </div>
+                <div class="form-group">
+                    <label for="shop_description_${nextIndex}">Shop Description (optional)</label>
+                    <input type="text" id="shop_description_${nextIndex}" name="shop_description_${nextIndex}" placeholder="What do you sell?">
+                </div>
+                <div class="form-group">
+                    <label for="shop_country_${nextIndex}">Country</label>
+                    <input type="text" id="shop_country_${nextIndex}" name="shop_country_${nextIndex}" placeholder="Country">
+                </div>
+                <div class="form-group">
+                    <label for="shop_division_${nextIndex}">Division/State</label>
+                    <input type="text" id="shop_division_${nextIndex}" name="shop_division_${nextIndex}" placeholder="Division or State">
+                </div>
+                <div class="form-group">
+                    <label for="shop_district_${nextIndex}">District/City</label>
+                    <input type="text" id="shop_district_${nextIndex}" name="shop_district_${nextIndex}" placeholder="District or City">
+                </div>
+            `;
+            shopsContainer.appendChild(wrapper);
+            setShopFieldsRequired(hasShopsSelect.value === 'yes');
+        }
+
+        if (roleSelect) {
+            roleSelect.addEventListener('change', toggleSellerFields);
+        }
+        if (hasShopsSelect) {
+            hasShopsSelect.addEventListener('change', toggleShopFields);
+        }
+        if (addShopButton) {
+            addShopButton.addEventListener('click', addShopFields);
+        }
+
+        toggleSellerFields();
+    })();
+</script>
+{% endblock %}
+

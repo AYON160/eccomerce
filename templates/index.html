@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Ecommerce{% endblock %}
+
+{% block content %}
+
+<section class="featured-section">
+    <div class="container">
+        <h2>Featured Products</h2>
+        <div class="products-flex">
+            {% for product in featured_products %}
+            <a href="/product/{{ product.id }}" class="product-card product-link">
+                <div class="product-image">
+                    <img src="{{ url_for('serve_asset', path=product.image) }}" alt="{{ product.name }}">
+                </div>
+                <div class="product-info">
+                    <h3>{{ product.name }}</h3>
+                    <p class="description">{{ product.description }}</p>
+                    <div class="product-footer">
+                        <span class="price">${{ product.price }}</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="categories-section">
+    <div class="container">
+        <h2>Shop by Category</h2>
+        <div class="categories-grid">
+            {% for key, name in categories.items() %}
+            <a href="/products?category={{ key }}" class="category-card">
+                <div class="category-icon">📦</div>
+                <h3>{{ name }}</h3>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="promo-section">
+    <div class="container">
+        <div class="promo-content">
+            <h2>Special Offer</h2>
+            <p>Get 20% off your first purchase with code: WELCOME20</p>
+            <a href="/products" class="btn btn-primary">Shop Now</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

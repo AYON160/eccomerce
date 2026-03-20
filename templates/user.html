@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="user-profile-page">
+    <div class="container">
+        <div class="profile-header">
+            <h1>Welcome, {{ user_name }}!</h1>
+            <p class="role-badge">{{ 'Seller' if user_role == 'seller' else 'Buyer' }}</p>
+        </div>
+
+        <div class="profile-tabs">
+            <button class="tab-btn active" onclick="showTab('favorites')">
+                <span>♥</span> Liked Products ({{ favorite_products|length }})
+            </button>
+            <button class="tab-btn" onclick="showTab('wishlist')">
+                <span>⋆</span> Wishlist ({{ wishlist_products|length }})
+            </button>
+        </div>
+
+        <!-- Favorites Tab -->
+        <div id="favorites" class="tab-content active">
+            <h2>Your Liked Products</h2>
+            {% if favorite_products %}
+                <div class="products-grid">
+                    {% for product in favorite_products %}
+                    <a href="/product/{{ product.id }}" class="product-card">
+                        <div class="product-image">
+                            <img src="{{ url_for('serve_asset', path=product.image) }}" alt="{{ product.name }}">
+                        </div>
+                        <div class="product-info">
+                            <h3>{{ product.name }}</h3>
+                            <p class="description">{{ product.description }}</p>
+                            <div class="product-footer">
+                                <span class="price">${{ product.price }}</span>
+                            </div>
+                            <button class="btn btn-secondary" onclick="event.preventDefault(); removeFromFavorites({{ product.id }})">Remove</button>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No liked products yet.</p>
+                    <a href="/products" class="btn btn-primary">Start Exploring</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Wishlist Tab -->
+        <div id="wishlist" class="tab-content">
+            <h2>Your Wishlist</h2>
+            {% if wishlist_products %}
+                <div class="products-grid">
+                    {% for product in wishlist_products %}
+                    <a href="/product/{{ product.id }}" class="product-card">
+                        <div class="product-image">
+                            <img src="{{ url_for('serve_asset', path=product.image) }}" alt="{{ product.name }}">
+                        </div>
+                        <div class="product-info">
+                            <h3>{{ product.name }}</h3>
+                            <p class="description">{{ product.description }}</p>
+                            <div class="product-footer">
+                                <span class="price">${{ product.price }}</span>
+                            </div>
+                            <button class="btn btn-secondary" onclick="event.preventDefault(); removeFromWishlist({{ product.id }})">Remove</button>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>Your wishlist is empty.</p>
+                    <a href="/products" class="btn btn-primary">Start Exploring</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Deactivate all buttons
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    event.target.closest('.tab-btn').classList.add('active');
+}
+
+function removeFromFavorites(productId) {
+    fetch(`/remove-from-favorites/${productId}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+function removeFromWishlist(productId) {
+    fetch(`/remove-from-wishlist/${productId}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(err => console.error('Error:', err));
+}
+</script>
+{% endblock %}

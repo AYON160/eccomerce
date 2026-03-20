@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - Ecommerce{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+    <div class="container">
+        <h1>Shopping Cart</h1>
+
+        {% if cart_items %}
+        <div class="cart-content">
+            <div class="cart-items">
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>${{ item.price }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ "%.2f"|format(item.price * item.quantity) }}</td>
+                            <td>
+                                <form action="/remove-from-cart/{{ item.id }}" method="post" style="margin:0;">
+                                    <button class="btn btn-danger" type="submit">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <aside class="cart-summary">
+                <div class="summary-box">
+                    <h2>Order Summary</h2>
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span>${{ "%.2f"|format(total) }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping:</span>
+                        <span>Free</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (estimated):</span>
+                        <span>${{ "%.2f"|format(total * 0.08) }}</span>
+                    </div>
+                    <hr>
+                    <div class="summary-row total">
+                        <span>Total:</span>
+                        <span>${{ "%.2f"|format(total * 1.08) }}</span>
+                    </div>
+                    <a href="/checkout" class="btn btn-primary full-width">Proceed to Checkout</a>
+                    <a href="/products" class="btn btn-outline full-width">Continue Shopping</a>
+                </div>
+
+                <div class="promo-box">
+                    <h3>Promo Code</h3>
+                    <input type="text" placeholder="Enter promo code">
+                    <button class="btn btn-secondary">Apply</button>
+                </div>
+            </aside>
+        </div>
+        {% else %}
+        <div class="empty-cart">
+            <div class="empty-cart-icon">🛒</div>
+            <h2>Your cart is empty</h2>
+            <p>Start shopping and add products to your cart!</p>
+            <a href="/products" class="btn btn-primary">Continue Shopping</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

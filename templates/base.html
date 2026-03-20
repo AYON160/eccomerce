@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=   .0">
+    <title>{% block title %}ecccomerce - Your Online Store{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{{ session.get('theme', 'dark') }}">
+    <!-- Header (static: do not change) -->
+    <header class="header">
+        <div class="header-top">
+            <div class="logo">
+                <a href="/">Ecommerce</a>
+            </div>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            <nav class="header-nav">
+                <div class="top-links">
+                    <a href="/">Home</a>
+                    <a href="/about">About</a>
+                    <a href="/contact">Contact</a>
+                    {% if session.get('user') and session.get('role') == 'seller' %}
+                        <a href="/user/seller" class="seller-link">I'm a Seller</a>
+                    {% else %}
+                        <a href="/login?mode=signup" class="seller-link">I'm a Seller</a>
+                    {% endif %}
+                    {% if session.get('user') and session.get('role') == 'admin' %}
+                        <a href="/admin" class="admin-link">Admin Panel</a>
+                    {% endif %}
+                </div>
+                <div class="header-search">
+                    <form action="/products" method="get">
+                        <input type="text" name="search" placeholder="Search products..." value="{{ request.args.get('search','') }}">
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+                <div class="header-profile">
+                    {% if session.get('user') %}
+                        <a href="/user" class="profile-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" fill="currentColor"/></svg></a>
+                        <span class="user-name">{{ session.get('user','').split(' ')[0] }}</span>
+                        <a href="/logout" class="logout-link">Logout</a>
+                    {% else %}
+                        <a href="/login" class="profile"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" fill="currentColor"/></svg> Log In</a>
+                        <a href="/login?mode=signup" class="signup-link">Sign Up</a>
+                    {% endif %}
+                </div>
+                <div class="header-icons">
+                    <form action="/toggle-theme" method="post" style="display:inline;margin-right:12px;">
+                        <button type="submit" class="btn btn-outline">Toggle Theme</button>
+                    </form>
+                    <a href="/cart" class="cart-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Secondary Navigation (static: do not change) -->
+        <nav class="nav-menu">
+            <ul class="menu-list">
+                <li><a href="/products?category=electronics" class="{% if request.args.get('category') == 'electronics' %}active{% endif %}">Electronics</a></li>
+                <li><a href="/products?category=grocery" class="{% if request.args.get('category') == 'grocery' %}active{% endif %}">Grocery</a></li>
+                <li><a href="/products?category=cloths" class="{% if request.args.get('category') == 'cloths' %}active{% endif %}">Cloths</a></li> 
+                <li><a href="/products?category=vehicles" class="{% if request.args.get('category') == 'vehicles' %}active{% endif %}">Vehicles</a></li>
+                <li><a href="/products?category=others" class="{% if request.args.get('category') == 'others' %}active{% endif %}">Books</a></li>
+                <li><a href="/products?category=health" class="{% if request.args.get('category') == 'health' %}active{% endif %}">Health</a></li>
+                <li><a href="/products?category=security" class="{% if request.args.get('category') == 'security' %}active{% endif %}">Security</a></li>
+                <li><a href="/products?category=household" class="{% if request.args.get('category') == 'household' %}active{% endif %}">Household</a></li>
+                <li><a href="/products?category=computers" class="{% if request.args.get('category') == 'computers' %}active{% endif %}">Computers</a></li>
+                <li><a href="/shops" class="{% if request.endpoint == 'shops' %}active{% endif %}">Shops</a></li>
+                <li><a href="/products" class="{% if not request.args.get('category') %}active{% endif %}">Others</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Ecommerce</h3>
+                <p>Your trusted online marketplace for quality products.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/products">Products</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Customer Service</h3>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Shipping Info</a></li>
+                    <li><a href="#">Returns</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Info</h3>
+                <p>Email: info@shophub.com</p>
+                <p>Phone: 1-800-SHOP-HUB</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Ecommerce. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+    function toggleMenu() {
+        const nav = document.querySelector('.header-nav');
+        nav.classList.toggle('active');
+    }
+    </script>
+    {% block scripts %}{% endblock %}
+
+</body>
+<!-- <script>
+// Disable right-click
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Disable F12, Ctrl+Shift+I (Dev tools)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+        e.preventDefault();
+    }
+});
+
+// Disable Ctrl+Shift+C (Inspect element)
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+    }
+});
+</script> -->
+</html>
